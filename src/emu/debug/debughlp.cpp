@@ -1556,12 +1556,10 @@ static const help_item static_help_list[] =
     CODE
 ***************************************************************************/
 
-const char *debug_get_help(const char *tag)
+static auto debug_help_search(const char *tag, size_t taglen)
 {
-	static char ambig_message[1024];
 	const help_item *found = nullptr;
-	int i, msglen, foundcount = 0;
-	size_t taglen = strlen(tag);
+	int i,  foundcount = 0;
 
 	/* find a match */
 	for (i = 0; i < ARRAY_LENGTH(static_help_list); i++)
@@ -1576,12 +1574,29 @@ const char *debug_get_help(const char *tag)
 			}
 		}
 
+	struct search_result
+	{
+		const help_item *found;
+		int foundcount;
+	};
+
+	return search_result { found, foundcount };
+}
+
+const char *debug_get_help(const char *tag)
+{
+	static char ambig_message[1024];
+	int i, msglen;
+	size_t taglen = strlen(tag);
+
+	auto search_result = debug_help_search(tag, taglen);
+
 	/* only a single match makes sense */
-	if (foundcount == 1)
-		return found->help;
+	if (search_result.foundcount == 1)
+		return search_result.found->help;
 
 	/* if not found, return the first entry */
-	if (foundcount == 0)
+	if (search_result.foundcount == 0)
 		return static_help_list[0].help;
 
 	/* otherwise, indicate ambiguous help */
@@ -1590,4 +1605,13 @@ const char *debug_get_help(const char *tag)
 		if (!core_strnicmp(static_help_list[i].tag, tag, taglen))
 			msglen += sprintf(&ambig_message[msglen], "  help %s?\n", static_help_list[i].tag);
 	return ambig_message;
+}
+
+int debug_has_help(const char *tag)
+{
+	size_t taglen = strlen(tag);
+
+	auto search_result = debug_help_search(tag, taglen);
+
+	return search_result.foundcount == 1;
 }

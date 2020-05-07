@@ -11,6 +11,7 @@
 #include "emu.h"
 #include "debugcon.h"
 #include "debugcpu.h"
+#include "debughlp.h"
 #include "debugvw.h"
 #include "textbuf.h"
 #include "debugger.h"
@@ -60,6 +61,7 @@ debugger_console::debugger_console(running_machine &machine)
 
 	/* register our own custom-command help */
 	register_command("helpcustom", CMDFLAG_NONE, 0, 0, 0, std::bind(&debugger_console::execute_help_custom, this, _1, _2));
+	register_command("list_undocumented", CMDFLAG_NONE, 0, 0, 1, std::bind(&debugger_console::execute_list_undocumented, this, _1, _2));
 }
 
 
@@ -116,6 +118,24 @@ void debugger_console::execute_help_custom(int ref, const std::vector<std::strin
 			buf[63] = 0;
 			char *temp_params[1] = { buf };
 			internal_execute_command(true, 1, &temp_params[0]);
+		}
+	}
+}
+
+/*-------------------------------------------------------------------------
+	execute_list_undocumented - execute the list_undocumented command
+---------------------------------------------------------------------------*/
+
+void debugger_console::execute_list_undocumented(int ref, const std::vector<std::string> &params)
+{
+	/* check the list of registered commands for those that don't have a help message registered */
+
+	for (const debug_command &cmd : m_commandlist)
+	{
+		/* absolutely no effort made to keep this clean */
+		if (!debug_has_help(cmd.command))
+		{
+			printf_wrap(80, "%s\n", cmd.command);
 		}
 	}
 }

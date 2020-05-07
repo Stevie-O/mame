@@ -20,5 +20,6 @@
 
 /* help management */
 const char *        debug_get_help(const char *tag);
+int                 debug_has_help(const char *tag);
 
 #endif // MAME_EMU_DEBUG_DEBUGHLP_H
